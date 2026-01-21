@@ -162,6 +162,7 @@ Yes, authorized users can cancel an onboarding instance if needed (for example, 
 - Tailwind CSS for styling
 - React Query (TanStack Query) for data fetching
 - React Router v6 for routing
+- Headless UI + Heroicons for UI components
 - Recharts for data visualization
 
 ### How do I run only the backend server?
@@ -229,9 +230,9 @@ Best practices:
 
 ### Can I deploy OpsHub to production?
 Yes, OpsHub can be deployed to production environments. Recommended platforms:
-- Backend: Heroku, AWS EC2, DigitalOcean, Railway, Render
+- Backend: Railway, Render, AWS EC2, DigitalOcean, or any Node.js hosting service
 - Frontend: Vercel, Netlify, or serve from the same backend server
-- Database: MongoDB Atlas, self-hosted MongoDB
+- Database: MongoDB Atlas (recommended), self-hosted MongoDB
 
 ### What environment variables are required for production?
 All variables from `.env.example` should be configured, with particular attention to:
