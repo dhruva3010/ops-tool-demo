@@ -7,6 +7,7 @@ const {
   refreshToken,
   getMe,
   logout,
+  changePassword,
   googleCallback,
   microsoftCallback,
 } = require('../controllers/authController');
@@ -20,6 +21,7 @@ router.post('/login', userValidation.login, login);
 router.post('/refresh', verifyRefreshToken, refreshToken);
 router.post('/logout', logout);
 router.get('/me', protect, getMe);
+router.post('/change-password', protect, userValidation.changePassword, changePassword);
 
 // Google OAuth
 router.get(

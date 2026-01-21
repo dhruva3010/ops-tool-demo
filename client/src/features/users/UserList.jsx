@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { PlusIcon, MagnifyingGlassIcon } from '@heroicons/react/24/outline';
+import { PlusIcon, MagnifyingGlassIcon, PencilSquareIcon } from '@heroicons/react/24/outline';
 import toast from 'react-hot-toast';
 import { usersAPI, authAPI } from '../../services/api';
 import { useAuth } from '../../context/AuthContext';
@@ -9,6 +9,7 @@ import {
   Table, TableHead, TableBody, TableRow, TableHeader, TableCell,
   StatusBadge, RoleBadge, Button, Input, Select, Modal, EmptyState, Spinner
 } from '../../components/ui';
+import RoleEditModal from './RoleEditModal';
 
 const roleOptions = [
   { value: 'admin', label: 'Admin' },
@@ -17,11 +18,13 @@ const roleOptions = [
 ];
 
 export default function UserList() {
-  const { isAdmin } = useAuth();
+  const { isAdmin, user: currentUser } = useAuth();
   const queryClient = useQueryClient();
   const [search, setSearch] = useState('');
   const [roleFilter, setRoleFilter] = useState('');
   const [showModal, setShowModal] = useState(false);
+  const [showRoleModal, setShowRoleModal] = useState(false);
+  const [selectedUser, setSelectedUser] = useState(null);
 
   const { data, isLoading, refetch } = useQuery({
     queryKey: ['users', search, roleFilter],
@@ -125,20 +128,36 @@ export default function UserList() {
                   </TableCell>
                   {isAdmin() && (
                     <TableCell>
-                      {user.isActive && (
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => {
-                            if (confirm('Are you sure you want to deactivate this user?')) {
-                              deactivateMutation.mutate(user._id);
-                            }
-                          }}
-                          className="text-red-600 hover:text-red-700"
-                        >
-                          Deactivate
-                        </Button>
-                      )}
+                      <div className="flex items-center space-x-2">
+                        {/* Edit Role Button - don't show for current user */}
+                        {user._id !== currentUser?._id && (
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => {
+                              setSelectedUser(user);
+                              setShowRoleModal(true);
+                            }}
+                            title="Edit Role"
+                          >
+                            <PencilSquareIcon className="h-4 w-4" />
+                          </Button>
+                        )}
+                        {user.isActive && user._id !== currentUser?._id && (
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => {
+                              if (confirm('Are you sure you want to deactivate this user?')) {
+                                deactivateMutation.mutate(user._id);
+                              }
+                            }}
+                            className="text-red-600 hover:text-red-700"
+                          >
+                            Deactivate
+                          </Button>
+                        )}
+                      </div>
                     </TableCell>
                   )}
                 </TableRow>
@@ -152,6 +171,16 @@ export default function UserList() {
       <CreateUserModal
         isOpen={showModal}
         onClose={() => { setShowModal(false); refetch(); }}
+      />
+
+      {/* Role Edit Modal */}
+      <RoleEditModal
+        isOpen={showRoleModal}
+        onClose={() => {
+          setShowRoleModal(false);
+          setSelectedUser(null);
+        }}
+        user={selectedUser}
       />
     </div>
   );

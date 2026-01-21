@@ -2,7 +2,7 @@ import { Routes, Route, Navigate } from 'react-router-dom';
 import { useAuth } from './context/AuthContext';
 import { Layout } from './components/layout';
 import { LoadingPage } from './components/ui';
-import { LoginPage, OAuthCallback } from './features/auth';
+import { LoginPage, OAuthCallback, ForcePasswordChangePage } from './features/auth';
 import Dashboard from './features/Dashboard';
 import { AssetList } from './features/assets';
 import { OnboardingList } from './features/onboarding';
@@ -12,7 +12,7 @@ import { ProfilePage } from './features/profile';
 
 // Protected Route wrapper with role check
 function ProtectedRoute({ children, roles }) {
-  const { user, loading } = useAuth();
+  const { user, loading, requiresPasswordChange } = useAuth();
 
   if (loading) {
     return <LoadingPage />;
@@ -22,11 +22,36 @@ function ProtectedRoute({ children, roles }) {
     return <Navigate to="/login" replace />;
   }
 
+  // Redirect to password change if required
+  if (requiresPasswordChange) {
+    return <Navigate to="/change-password" replace />;
+  }
+
   if (roles && !roles.includes(user.role)) {
     return <Navigate to="/" replace />;
   }
 
   return children;
+}
+
+// Password change route guard
+function PasswordChangeRoute() {
+  const { user, loading, requiresPasswordChange } = useAuth();
+
+  if (loading) {
+    return <LoadingPage />;
+  }
+
+  if (!user) {
+    return <Navigate to="/login" replace />;
+  }
+
+  // If user doesn't need to change password, redirect to home
+  if (!requiresPasswordChange) {
+    return <Navigate to="/" replace />;
+  }
+
+  return <ForcePasswordChangePage />;
 }
 
 export default function App() {
@@ -42,8 +67,11 @@ export default function App() {
       <Route path="/login" element={<LoginPage />} />
       <Route path="/oauth/callback" element={<OAuthCallback />} />
 
+      {/* Password change route */}
+      <Route path="/change-password" element={<PasswordChangeRoute />} />
+
       {/* Protected routes */}
-      <Route element={<Layout />}>
+      <Route element={<ProtectedRoute><Layout /></ProtectedRoute>}>
         <Route path="/" element={<Dashboard />} />
         <Route path="/profile" element={<ProfilePage />} />
         <Route path="/assets" element={<AssetList />} />

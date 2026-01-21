@@ -37,6 +37,27 @@ const userValidation = {
     body('isActive').optional().isBoolean(),
     handleValidation,
   ],
+  changePassword: [
+    body('currentPassword').notEmpty().withMessage('Current password is required'),
+    body('newPassword')
+      .isLength({ min: 6 }).withMessage('Password must be at least 6 characters')
+      .matches(/[A-Z]/).withMessage('Password must contain at least one uppercase letter')
+      .matches(/[a-z]/).withMessage('Password must contain at least one lowercase letter')
+      .matches(/[0-9]/).withMessage('Password must contain at least one number'),
+    body('confirmPassword')
+      .notEmpty().withMessage('Confirm password is required')
+      .custom((value, { req }) => {
+        if (value !== req.body.newPassword) {
+          throw new Error('Passwords do not match');
+        }
+        return true;
+      }),
+    handleValidation,
+  ],
+  updateRole: [
+    body('role').isIn(['admin', 'manager', 'employee']).withMessage('Role must be admin, manager, or employee'),
+    handleValidation,
+  ],
 };
 
 // Asset validation rules

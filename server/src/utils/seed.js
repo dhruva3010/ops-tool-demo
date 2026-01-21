@@ -24,6 +24,7 @@ const seedAdmin = async () => {
       department: 'IT',
       authProvider: 'local',
       isActive: true,
+      mustChangePassword: true,
     });
 
     console.log('Admin user created:', admin.email);

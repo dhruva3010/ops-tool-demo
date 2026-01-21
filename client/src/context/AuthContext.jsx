@@ -7,6 +7,7 @@ const AuthContext = createContext(null);
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [requiresPasswordChange, setRequiresPasswordChange] = useState(false);
   const navigate = useNavigate();
 
   const loadUser = useCallback(async () => {
@@ -18,7 +19,9 @@ export function AuthProvider({ children }) {
 
     try {
       const response = await authAPI.getMe();
-      setUser(response.data.user);
+      const userData = response.data.user;
+      setUser(userData);
+      setRequiresPasswordChange(userData.mustChangePassword || false);
     } catch (error) {
       localStorage.removeItem('accessToken');
       localStorage.removeItem('refreshToken');
@@ -38,6 +41,7 @@ export function AuthProvider({ children }) {
     localStorage.setItem('accessToken', accessToken);
     localStorage.setItem('refreshToken', refreshToken);
     setUser(user);
+    setRequiresPasswordChange(user.mustChangePassword || false);
 
     return user;
   };
@@ -51,8 +55,21 @@ export function AuthProvider({ children }) {
       localStorage.removeItem('accessToken');
       localStorage.removeItem('refreshToken');
       setUser(null);
+      setRequiresPasswordChange(false);
       navigate('/login');
     }
+  };
+
+  const completePasswordChange = async (data) => {
+    const response = await authAPI.changePassword(data);
+    const { user, accessToken, refreshToken } = response.data;
+
+    localStorage.setItem('accessToken', accessToken);
+    localStorage.setItem('refreshToken', refreshToken);
+    setUser(user);
+    setRequiresPasswordChange(false);
+
+    return user;
   };
 
   const handleOAuthCallback = async (accessToken, refreshToken) => {
@@ -72,8 +89,10 @@ export function AuthProvider({ children }) {
   const value = {
     user,
     loading,
+    requiresPasswordChange,
     login,
     logout,
+    completePasswordChange,
     handleOAuthCallback,
     hasRole,
     isAdmin,

@@ -5,6 +5,7 @@ const {
   getUser,
   updateUser,
   deleteUser,
+  updateUserRole,
   getUserStats,
 } = require('../controllers/userController');
 const { protect } = require('../middleware/auth');
@@ -23,6 +24,7 @@ router.get('/', getUsers);
 // Single user operations
 router.get('/:id', mongoIdParam(), getUser);
 router.put('/:id', mongoIdParam(), userValidation.update, updateUser);
+router.put('/:id/role', mongoIdParam(), requireRole('admin'), userValidation.updateRole, updateUserRole);
 router.delete('/:id', mongoIdParam(), requireRole('admin'), deleteUser);
 
 module.exports = router;
