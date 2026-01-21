@@ -44,6 +44,13 @@ const userSchema = new mongoose.Schema(
       type: Boolean,
       default: true,
     },
+    mustChangePassword: {
+      type: Boolean,
+      default: false,
+    },
+    passwordChangedAt: {
+      type: Date,
+    },
   },
   {
     timestamps: true,
@@ -58,6 +65,12 @@ userSchema.pre('save', async function (next) {
 
   const salt = await bcrypt.genSalt(10);
   this.password = await bcrypt.hash(this.password, salt);
+
+  // Set passwordChangedAt when password is modified (except for new documents)
+  if (!this.isNew) {
+    this.passwordChangedAt = new Date();
+  }
+
   next();
 });
 
@@ -70,6 +83,8 @@ userSchema.methods.comparePassword = async function (candidatePassword) {
 userSchema.methods.toJSON = function () {
   const user = this.toObject();
   delete user.password;
+  // Include mustChangePassword in the response
+  user.mustChangePassword = this.mustChangePassword || false;
   return user;
 };
 

@@ -14,7 +14,7 @@ const register = async (req, res) => {
       return res.status(400).json({ message: 'User already exists' });
     }
 
-    // Create user
+    // Create user with mustChangePassword flag
     const user = await User.create({
       email: email.toLowerCase(),
       password,
@@ -22,6 +22,7 @@ const register = async (req, res) => {
       role: role || 'employee',
       department,
       authProvider: 'local',
+      mustChangePassword: true,
     });
 
     const tokens = generateTokens(user._id);
@@ -82,6 +83,55 @@ const logout = async (req, res) => {
   res.json({ message: 'Logged out successfully' });
 };
 
+// @desc    Change password
+// @route   POST /api/auth/change-password
+const changePassword = async (req, res) => {
+  try {
+    const { currentPassword, newPassword } = req.body;
+
+    // Get user with password field
+    const user = await User.findById(req.user._id).select('+password');
+
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    // Only local auth users can change password
+    if (user.authProvider !== 'local') {
+      return res.status(400).json({ message: 'Password change not available for OAuth users' });
+    }
+
+    // Verify current password
+    const isMatch = await user.comparePassword(currentPassword);
+    if (!isMatch) {
+      return res.status(401).json({ message: 'Current password is incorrect' });
+    }
+
+    // Ensure new password is different
+    const isSame = await user.comparePassword(newPassword);
+    if (isSame) {
+      return res.status(400).json({ message: 'New password must be different from current password' });
+    }
+
+    // Update password and clear mustChangePassword flag
+    user.password = newPassword;
+    user.mustChangePassword = false;
+    await user.save();
+
+    // Generate new tokens (invalidate old sessions)
+    const tokens = generateTokens(user._id);
+
+    res.json({
+      message: 'Password changed successfully',
+      user: user.toJSON(),
+      ...tokens,
+    });
+  } catch (error) {
+    console.error('Change password error:', error);
+    res.status(500).json({ message: 'Server error during password change' });
+  }
+};
+
 // @desc    Google OAuth callback
 // @route   GET /api/auth/google/callback
 const googleCallback = (req, res, next) => {
@@ -122,6 +172,7 @@ module.exports = {
   refreshToken,
   getMe,
   logout,
+  changePassword,
   googleCallback,
   microsoftCallback,
 };

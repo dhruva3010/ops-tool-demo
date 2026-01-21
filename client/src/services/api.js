@@ -61,6 +61,7 @@ export const authAPI = {
   getMe: () => api.get('/auth/me'),
   logout: () => api.post('/auth/logout'),
   refresh: (refreshToken) => api.post('/auth/refresh', { refreshToken }),
+  changePassword: (data) => api.post('/auth/change-password', data),
 };
 
 // Users API
@@ -70,6 +71,7 @@ export const usersAPI = {
   update: (id, data) => api.put(`/users/${id}`, data),
   delete: (id) => api.delete(`/users/${id}`),
   getStats: () => api.get('/users/stats'),
+  updateRole: (id, role) => api.put(`/users/${id}/role`, { role }),
 };
 
 // Assets API

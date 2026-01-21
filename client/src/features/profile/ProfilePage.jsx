@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { UserCircleIcon, CameraIcon } from '@heroicons/react/24/outline';
+import { UserCircleIcon, CameraIcon, KeyIcon } from '@heroicons/react/24/outline';
 import toast from 'react-hot-toast';
 import { useAuth } from '../../context/AuthContext';
 import { useTheme } from '../../context/ThemeContext';
@@ -10,6 +10,7 @@ import {
   Card, CardHeader, CardTitle, CardContent,
   Button, Input, RoleBadge
 } from '../../components/ui';
+import ChangePasswordModal from './ChangePasswordModal';
 
 export default function ProfilePage() {
   const { user, loadUser } = useAuth();
@@ -17,6 +18,7 @@ export default function ProfilePage() {
   const queryClient = useQueryClient();
 
   const [editing, setEditing] = useState(false);
+  const [showPasswordModal, setShowPasswordModal] = useState(false);
   const [form, setForm] = useState({
     name: user?.name || '',
     department: user?.department || '',
@@ -178,6 +180,33 @@ export default function ProfilePage() {
           </CardContent>
         </Card>
 
+        {/* Security - Only for local auth users */}
+        {user?.authProvider === 'local' && (
+          <Card>
+            <CardHeader>
+              <CardTitle>Security</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="flex items-center justify-between">
+                <div className="flex items-center space-x-3">
+                  <div className="p-2 rounded-lg bg-gray-100 dark:bg-gray-700">
+                    <KeyIcon className="h-5 w-5 text-gray-600 dark:text-gray-300" />
+                  </div>
+                  <div>
+                    <p className="font-medium text-gray-900 dark:text-gray-100">Password</p>
+                    <p className="text-sm text-gray-500 dark:text-gray-400">
+                      Change your account password
+                    </p>
+                  </div>
+                </div>
+                <Button variant="secondary" onClick={() => setShowPasswordModal(true)}>
+                  Change Password
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
         {/* Preferences */}
         <Card>
           <CardHeader>
@@ -212,6 +241,12 @@ export default function ProfilePage() {
           </CardContent>
         </Card>
       </div>
+
+      {/* Change Password Modal */}
+      <ChangePasswordModal
+        isOpen={showPasswordModal}
+        onClose={() => setShowPasswordModal(false)}
+      />
     </div>
   );
 }

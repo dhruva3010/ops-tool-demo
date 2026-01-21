@@ -166,6 +166,45 @@ const deleteUser = async (req, res) => {
   }
 };
 
+// @desc    Update user role (admin only)
+// @route   PUT /api/users/:id/role
+const updateUserRole = async (req, res) => {
+  try {
+    const { role } = req.body;
+    const userId = req.params.id;
+
+    // Prevent self-role changes
+    if (userId === req.user._id.toString()) {
+      return res.status(400).json({ message: 'Cannot change your own role' });
+    }
+
+    const user = await User.findById(userId);
+
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    // If demoting the user from admin, check if this is the last active admin
+    if (user.role === 'admin' && role !== 'admin') {
+      const adminCount = await User.countDocuments({ role: 'admin', isActive: true });
+      if (adminCount <= 1) {
+        return res.status(400).json({ message: 'Cannot demote the last active admin' });
+      }
+    }
+
+    user.role = role;
+    await user.save();
+
+    res.json({
+      message: 'User role updated successfully',
+      user: user.toJSON(),
+    });
+  } catch (error) {
+    console.error('Update user role error:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+};
+
 // @desc    Get user stats (admin only)
 // @route   GET /api/users/stats
 const getUserStats = async (req, res) => {
@@ -213,5 +252,6 @@ module.exports = {
   getUser,
   updateUser,
   deleteUser,
+  updateUserRole,
   getUserStats,
 };
